@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#2563eb">
+  <title>Weight Tracker Pro - Lem76</title>
+  <!-- Chart.js per il grafico -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --fat-color: #f59e0b;
+    }
+
+    [data-theme="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #059669;
+      --success-light: #064e3b;
+      --danger: #dc2626;
+      --danger-light: #7f1d1d;
+      --fat-color: #d97706;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Stile Logo Lem76 */
+    .brand-logo {
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 8px 12px;
+      border-radius: 10px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    }
+
+    .header-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      color: var(--primary);
+    }
+
+    .name-input {
+      background: transparent;
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      outline: none;
+      padding: 2px 0;
+      border-bottom: 1px dashed transparent;
+    }
+
+    .name-input:focus, .name-input:hover {
+      border-bottom-color: var(--primary);
+      color: var(--text);
+    }
+
+    .btn-group-header {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      background-color: var(--primary);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    button.btn-outline {
+      background-color: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+
+    button.btn-outline:hover {
+      background-color: rgba(37, 99, 235, 0.1);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .week-navigation {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .week-title-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .date-picker-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .date-picker-input {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: var(--bg);
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    /* Griglia 7 Giorni */
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .day-btn {
+      padding: 12px 4px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85rem;
+    }
+
+    .day-btn.active {
+      border-color: var(--primary);
+      background-color: rgba(37, 99, 235, 0.15);
+      font-weight: bold;
+    }
+
+    .day-btn.has-data {
+      background-color: var(--success-light);
+      border-color: var(--success);
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    .inputs-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    .weight-input-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .weekly-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    input[type="number"], input[type="text"] {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .stat-card {
+      background: var(--bg);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    .stat-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .delta {
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    .delta.minus { color: var(--success); }
+    .delta.plus { color: var(--danger); }
+
+    /* Modal Grafico */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal.show { display: flex; }
+
+    .modal-content {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 850px;
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      border: 1px solid var(--border);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .days-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .weight-input-row, .weekly-metrics-row {
+        flex-direction: column;
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+<div class="container">
+  <header>
+    <div class="header-left">
+      <div class="brand-logo">Lem76</div>
+      <div class="header-title-area">
+        <h1>Weight Tracker Pro</h1>
+        <input type="text" id="userNameInput" class="name-input" placeholder="+ Inserisci nome (es. Mario Rossi)" onchange="saveUserName(this.value)">
+      </div>
+    </div>
+    <div class="btn-group-header">
+      <button class="btn-outline" onclick="toggleTheme()" id="themeBtn" title="Cambia Tema">🌙</button>
+      <button class="btn-outline" onclick="openChartModal()">📈 Grafico</button>
+      <button class="btn-outline" onclick="exportData()" title="Scarica backup JSON">📥 Esporta</button>
+      <button class="btn-outline" onclick="document.getElementById('importFile').click()" title="Carica backup JSON">📤 Importa</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+      <button onclick="runSimulation()">⚡ Simula</button>
+    </div>
+  </header>
+
+  <!-- Controllo Settimana & Calendario -->
+  <div class="card">
+    <div class="week-navigation">
+      <button class="btn-outline" onclick="changeWeek(-1)">← Sett. Prec.</button>
+      
+      <div class="week-title-container">
+        <h3 id="currentWeekLabel">Settimana --</h3>
+        <div class="date-picker-wrapper" title="Seleziona una data per saltare alla settimana">
+          <input type="date" id="weekDatePicker" class="date-picker-input" onchange="onDateSelected(this.value)">
+        </div>
+      </div>
+
+      <button class="btn-outline" onclick="changeWeek(1)">Sett. Succ. →</button>
+    </div>
+
+    <!-- Griglia 7 Giorni -->
+    <div class="days-grid" id="daysGrid"></div>
+
+    <!-- Sezione Input Pesi, Kcal, Massa Grassa e Note -->
+    <div class="inputs-container">
+      <div class="weight-input-row">
+        <div class="form-group">
+          <label id="selectedDayLabel">Peso (kg):</label>
+          <input type="number" step="0.1" id="weightInput" placeholder="Es. 74.5">
+        </div>
+        <button onclick="saveWeight()">Salva Peso</button>
+      </div>
+
+      <div class="weekly-metrics-row">
+        <div class="form-group">
+          <label>Kcal Medie Settimanali:</label>
+          <input type="number" id="kcalInput" placeholder="Es. 2200" onchange="saveWeeklyMetrics()">
+        </div>
+        <div class="form-group">
+          <label>% Massa Grassa Settimanale:</label>
+          <input type="number" step="0.1" id="fatInput" placeholder="Es. 15.2" onchange="saveWeeklyMetrics()">
+        </div>
+        <div class="form-group">
+          <label>Obiettivo Peso (Target kg):</label>
+          <input type="number" step="0.1" id="targetInput" placeholder="Es. 70.0 o 80.0" onchange="saveTarget(this.value)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Note della Settimana (Sgarri, stress, fluttuazioni):</label>
+        <input type="text" id="noteInput" placeholder="Es. Settimana regolare, molta ritenzione idrica" onchange="saveWeeklyMetrics()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Medie, Delta e Obiettivo -->
+  <div class="card">
+    <h3>Riepilogo e Medie Progressive</h3>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-subtitle">Media Settimana Corrente</div>
+        <div class="stat-value" id="currentAvg">-- kg</div>
+        <div class="stat-subtitle" id="entriesCount">0 pesate registrate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-subtitle">Settimana Precedente</div>
+        <div class="stat-value" style="font-size: 1.3rem;" id="prevAvg">-- kg</div>
+        <div id="deltaValue" class="delta">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-subtitle">Massa Grassa & Target</div>
+        <div class="stat-value" style="font-size: 1.3rem; color: var(--fat-color);" id="fatDisplay">-- %</div>
+        <div class="stat-subtitle" id="targetDisplay">Target: -- kg</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Grafico -->
+<div class="modal" id="chartModal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeChartModal()">&times;</button>
+    <h2>Andamento Peso, Kcal e % Massa Grassa</h2>
+    <div style="margin-top: 20px;">
+      <canvas id="weeklyChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedMondayStr = getMondayDateStr(new Date());
+  let selectedDayIndex = 0;
+  const dayNames = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
+  let chartInstance = null;
+
+  function toggleTheme() {
+    const body = document.body;
+    const themeBtn = document.getElementById('themeBtn');
+    if (body.getAttribute('data-theme') === 'light') {
+      body.setAttribute('data-theme', 'dark');
+      themeBtn.innerText = '☀️';
+      localStorage.setItem('weight_tracker_theme', 'dark');
+    } else {
+      body.setAttribute('data-theme', 'light');
+      themeBtn.innerText = '🌙';
+      localStorage.setItem('weight_tracker_theme', 'light');
+    }
+  }
+
+  const savedTheme = localStorage.getItem('weight_tracker_theme');
+  if (savedTheme === 'dark') {
+    document.body.setAttribute('data-theme', 'dark');
+    document.getElementById('themeBtn').innerText = '☀️';
+  }
+
+  function getMondayDate(d) {
+    d = new Date(d);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+  }
+
+  function formatDateStr(date) {
+    const d = new Date(date);
+    let month = '' + (d.getMonth() + 1);
+    let day = '' + d.getDate();
+    const year = d.getFullYear();
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+    return [year, month, day].join('-');
+  }
+
+  function formatToItalian(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  function getMondayDateStr(d) {
+    return formatDateStr(getMondayDate(d));
+  }
+
+  function getPrevWeekKey(mondayStr) {
+    const d = new Date(mondayStr);
+    d.setDate(d.getDate() - 7);
+    return formatDateStr(d);
+  }
+
+  function getData() {
+    return JSON.parse(localStorage.getItem('weight_tracker_data') || '{}');
+  }
+
+  function saveData(data) {
+    localStorage.setItem('weight_tracker_data', JSON.stringify(data));
+  }
+
+  function getTarget() {
+    return parseFloat(localStorage.getItem('weight_tracker_target')) || null;
+  }
+
+  function saveTarget(val) {
+    const targetVal = parseFloat(val);
+    if (isNaN(targetVal)) {
+      localStorage.removeItem('weight_tracker_target');
+    } else {
+      localStorage.setItem('weight_tracker_target', targetVal);
+    }
+    updateUI();
+  }
+
+  function getUserName() {
+    return localStorage.getItem('weight_tracker_username') || '';
+  }
+
+  function saveUserName(val) {
+    const nameVal = val.trim();
+    if (nameVal === '') {
+      localStorage.removeItem('weight_tracker_username');
+    } else {
+      localStorage.setItem('weight_tracker_username', nameVal);
+    }
+  }
+
+  function exportData() {
+    const data = getData();
+    const target = getTarget();
+    const userName = getUserName();
+    const backup = { data, target, userName };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `weight_tracker_backup_${formatToItalian(selectedMondayStr).replace(/\//g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (parsed.data) {
+          saveData(parsed.data);
+        }
+        if (parsed.target !== undefined && parsed.target !== null) {
+          localStorage.setItem('weight_tracker_target', parsed.target);
+        }
+        if (parsed.userName) {
+          localStorage.setItem('weight_tracker_username', parsed.userName);
+        }
+        updateUI();
+        alert('Dati importati con successo!');
+      } catch (err) {
+        alert('Errore durante la lettura del file di backup.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function changeWeek(direction) {
+    const d = new Date(selectedMondayStr);
+    d.setDate(d.getDate() + (direction * 7));
+    selectedMondayStr = formatDateStr(d);
+    updateUI();
+  }
+
+  function onDateSelected(dateString) {
+    if (!dateString) return;
+    selectedMondayStr = getMondayDateStr(new Date(dateString));
+    updateUI();
+  }
+
+  function renderDaysGrid() {
+    const grid = document.getElementById('daysGrid');
+    grid.innerHTML = '';
+    const data = getData();
+    const weekData = data[selectedMondayStr] || { weights: {} };
+    const mondayDate = new Date(selectedMondayStr);
+
+    dayNames.forEach((day, idx) => {
+      const currentDate = new Date(mondayDate);
+      currentDate.setDate(mondayDate.getDate() + idx);
+      const dayNum = currentDate.getDate();
+
+      const btn = document.createElement('div');
+      const hasWeight = weekData.weights && weekData.weights[idx] !== undefined;
+      btn.className = `day-btn ${idx === selectedDayIndex ? 'active' : ''} ${hasWeight ? 'has-data' : ''}`;
+      btn.innerHTML = `<span>${day.substring(0, 3)} ${dayNum}</span><small>${hasWeight ? weekData.weights[idx] + 'kg' : '-'}</small>`;
+      btn.onclick = () => {
+        selectedDayIndex = idx;
+        updateUI();
+      };
+      grid.appendChild(btn);
+    });
+  }
+
+  function saveWeight() {
+    const weightVal = parseFloat(document.getElementById('weightInput').value);
+    if (isNaN(weightVal)) return;
+
+    const data = getData();
+    if (!data[selectedMondayStr]) data[selectedMondayStr] = { weights: {}, kcal: null, fat: null, note: '' };
+
+    data[selectedMondayStr].weights[selectedDayIndex] = weightVal;
+    saveData(data);
+    document.getElementById('weightInput').value = '';
+    updateUI();
+  }
+
+  function saveWeeklyMetrics() {
+    const kcalVal = parseInt(document.getElementById('kcalInput').value);
+    const fatVal = parseFloat(document.getElementById('fatInput').value);
+    const noteVal = document.getElementById('noteInput').value;
+
+    const data = getData();
+    if (!data[selectedMondayStr]) data[selectedMondayStr] = { weights: {}, kcal: null, fat: null, note: '' };
+
+    data[selectedMondayStr].kcal = isNaN(kcalVal) ? null : kcalVal;
+    data[selectedMondayStr].fat = isNaN(fatVal) ? null : fatVal;
+    data[selectedMondayStr].note = noteVal;
+
+    saveData(data);
+    updateUI();
+  }
+
+  function calculateProgressiveAvg(weekData, maxIndex) {
+    if (!weekData || !weekData.weights) return { avg: null, count: 0 };
+    let sum = 0, count = 0;
+    for (let i = 0; i <= maxIndex; i++) {
+      if (weekData.weights[i] !== undefined) {
+        sum += weekData.weights[i];
+        count++;
+      }
+    }
+    return { avg: count > 0 ? (sum / count) : null, count };
+  }
+
+  function updateUI() {
+    const data = getData();
+    const prevWeekKey = getPrevWeekKey(selectedMondayStr);
+    const targetVal = getTarget();
+    const userNameVal = getUserName();
+
+    const weekData = data[selectedMondayStr] || { weights: {}, kcal: null, fat: null, note: '' };
+    const prevWeekData = data[prevWeekKey] || { weights: {}, kcal: null, fat: null, note: '' };
+
+    const italianDateStr = formatToItalian(selectedMondayStr);
+    document.getElementById('currentWeekLabel').innerText = `Settimana del ${italianDateStr}`;
+    document.getElementById('weekDatePicker').value = selectedMondayStr;
+    document.getElementById('selectedDayLabel').innerText = `Peso per ${dayNames[selectedDayIndex]} (kg):`;
+    
+    document.getElementById('kcalInput').value = weekData.kcal ?? '';
+    document.getElementById('fatInput').value = weekData.fat ?? '';
+    document.getElementById('noteInput').value = weekData.note ?? '';
+    document.getElementById('targetInput').value = targetVal ?? '';
+    document.getElementById('userNameInput').value = userNameVal;
+    
+    document.getElementById('fatDisplay').innerText = weekData.fat !== null && weekData.fat !== undefined ? `${weekData.fat}%` : '-- %';
+
+    renderDaysGrid();
+
+    const currentRes = calculateProgressiveAvg(weekData, selectedDayIndex);
+    const currentAvgElem = document.getElementById('currentAvg');
+    
+    if (currentRes.avg !== null) {
+      currentAvgElem.innerText = `${currentRes.avg.toFixed(2)} kg`;
+      document.getElementById('entriesCount').innerText = `${currentRes.count} pesate considerate`;
+      
+      if (targetVal !== null) {
+        if (targetVal > currentRes.avg) {
+          // Fase di Massa: se il target è superiore al peso attuale
+          const diffTarget = targetVal - currentRes.avg;
+          if (currentRes.avg >= targetVal) {
+            document.getElementById('targetDisplay').innerText = `Target: ${targetVal} kg (Target raggiunto! 🎉)`;
+          } else {
+            document.getElementById('targetDisplay').innerText = `Target: ${targetVal} kg (+${diffTarget.toFixed(2)} kg al target)`;
+          }
+        } else {
+          // Fase di Definizione: se il target è inferiore o uguale al peso attuale
+          if (currentRes.avg <= targetVal) {
+            document.getElementById('targetDisplay').innerText = `Target: ${targetVal} kg (Target raggiunto! 🎉)`;
+          } else {
+            const diffTarget = currentRes.avg - targetVal;
+            document.getElementById('targetDisplay').innerText = `Target: ${targetVal} kg (-${diffTarget.toFixed(2)} kg al target)`;
+          }
+        }
+      } else {
+        document.getElementById('targetDisplay').innerText = `Target non impostato`;
+      }
+    } else {
+      currentAvgElem.innerText = `-- kg`;
+      document.getElementById('entriesCount').innerText = `0 pesate registrate`;
+      document.getElementById('targetDisplay').innerText = targetVal !== null ? `Target: ${targetVal} kg` : `Target non impostato`;
+    }
+
+    const prevRes = calculateProgressiveAvg(prevWeekData, 6);
+    const prevAvgElem = document.getElementById('prevAvg');
+    const deltaElem = document.getElementById('deltaValue');
+
+    if (prevRes.avg !== null) {
+      prevAvgElem.innerText = `${prevRes.avg.toFixed(2)} kg`;
+      if (currentRes.avg !== null) {
+        const diff = currentRes.avg - prevRes.avg;
+        const sign = diff > 0 ? '+' : '';
+        deltaElem.innerText = `Diff: ${sign}${diff.toFixed(2)} kg`;
+        deltaElem.className = `delta ${diff <= 0 ? 'minus' : 'plus'}`;
+      } else {
+        deltaElem.innerText = '--';
+      }
+    } else {
+      prevAvgElem.innerText = `-- kg`;
+      deltaElem.innerText = 'Nessun dato prec.';
+    }
+  }
+
+  function runSimulation() {
+    const data = getData();
+    const w1 = getPrevWeekKey(selectedMondayStr);
+    const w2 = selectedMondayStr;
+
+    data[w1] = { weights: { 0: 75.5, 1: 75.3, 2: 75.0, 3: 74.8, 4: 74.9, 5: 74.7, 6: 74.5 }, kcal: 2400, fat: 16.5, note: 'Settimana di carico' };
+    data[w2] = { weights: { 0: 74.4, 1: 74.2, 2: 74.0, 3: 73.9 }, kcal: 2250, fat: 15.8, note: 'Inizio definizione' };
+
+    localStorage.setItem('weight_tracker_target', '70.0');
+    localStorage.setItem('weight_tracker_username', 'Lem76 Athlete');
+    saveData(data);
+    updateUI();
+  }
+
+  function openChartModal() {
+    document.getElementById('chartModal').classList.add('show');
+    renderChart();
+  }
+
+  function closeChartModal() {
+    document.getElementById('chartModal').classList.remove('show');
+  }
+
+  function renderChart() {
+    const data = getData();
+    const sortedKeys = Object.keys(data).sort();
+    const targetVal = getTarget();
+
+    const labels = [];
+    const weightAvgs = [];
+    const kcalValues = [];
+    const fatValues = [];
+    const targetValues = [];
+
+    sortedKeys.forEach(key => {
+      const wRes = calculateProgressiveAvg(data[key], 6);
+      if (wRes.avg !== null || data[key].kcal || data[key].fat) {
+        labels.push(formatToItalian(key));
+        weightAvgs.push(wRes.avg ? wRes.avg.toFixed(2) : null);
+        kcalValues.push(data[key].kcal || null);
+        fatValues.push(data[key].fat || null);
+        targetValues.push(targetVal !== null ? targetVal : null);
+      }
+    });
+
+    const ctx = document.getElementById('weeklyChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    const datasets = [
+      {
+        label: 'Media Peso (kg)',
+        data: weightAvgs,
+        borderColor: '#2563eb',
+        backgroundColor: '#2563eb',
+        yAxisID: 'yWeight',
+        spanGaps: true
+      },
+      {
+        label: 'Kcal Medie',
+        data: kcalValues,
+        borderColor: '#10b981',
+        backgroundColor: '#10b981',
+        yAxisID: 'yKcal',
+        spanGaps: true
+      },
+      {
+        label: '% Massa Grassa',
+        data: fatValues,
+        borderColor: '#f59e0b',
+        backgroundColor: '#f59e0b',
+        yAxisID: 'yFat',
+        spanGaps: true
+      }
+    ];
+
+    if (targetVal !== null) {
+      datasets.push({
+        label: 'Obiettivo (Target)',
+        data: targetValues,
+        borderColor: '#ef4444',
+        borderDash: [5, 5],
+        pointRadius: 0,
+        yAxisID: 'yWeight',
+        spanGaps: true
+      });
+    }
+
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        scales: {
+          yWeight: {
+            type: 'linear',
+            position: 'left',
+            title: { display: true, text: 'Peso & Target (kg)' }
+          },
+          yKcal: {
+            type: 'linear',
+            position: 'right',
+            title: { display: true, text: 'Calorie (kcal)' },
+            grid: { drawOnChartArea: false }
+          },
+          yFat: {
+            type: 'linear',
+            position: 'right',
+            title: { display: true, text: '% Massa Grassa' },
+            grid: { drawOnChartArea: false },
+            ticks: { callback: function(value) { return value + '%'; } }
+          }
+        }
+      }
+    });
+  }
+
+  updateUI();
+</script>
+
+</body>
+</html>
