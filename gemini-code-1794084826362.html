@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#2563eb">
+  <title>Weight Tracker Pro - MEL Ecosystem</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --danger: #ef4444;
+      --fat-color: #f59e0b;
+      --accent: #8b5cf6;
+    }
+
+    [data-theme="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #059669;
+      --success-light: #064e3b;
+      --danger: #dc2626;
+      --fat-color: #d97706;
+      --accent: #a78bfa;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 950px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mel-global-logo {
+      background: linear-gradient(135deg, #2563eb, #8b5cf6);
+      color: white;
+      font-weight: 900;
+      font-size: 1.1rem;
+      padding: 8px 12px;
+      border-radius: 12px;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+    }
+    .mel-global-logo span {
+      font-size: 0.55rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .app-specific-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(37, 99, 235, 0.1);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--primary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--primary);
+      width: fit-content;
+    }
+
+    .header-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .name-input {
+      background: transparent;
+      border: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      outline: none;
+      border-bottom: 1px dashed transparent;
+    }
+
+    .name-input:focus, .name-input:hover {
+      border-bottom-color: var(--primary);
+      color: var(--text);
+    }
+
+    .btn-group-header {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      background-color: var(--primary);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    button:hover { background-color: var(--primary-hover); }
+
+    button.btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+
+    button.btn-danger-outline {
+      background-color: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+    button.btn-danger-outline:hover {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: flex; flex-direction: column; gap: 16px; }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .week-navigation {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .date-picker-input {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .day-btn {
+      padding: 10px 2px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+    }
+
+    .day-btn.active {
+      border-color: var(--primary);
+      background-color: rgba(37, 99, 235, 0.15);
+      font-weight: bold;
+    }
+
+    .day-btn.has-data {
+      background-color: var(--success-light);
+      border-color: var(--success);
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    .inputs-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    input, select {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--bg);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-top: 2px;
+    }
+
+    .stat-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .delta {
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-top: 2px;
+    }
+
+    .delta.minus { color: var(--success); }
+    .delta.plus { color: var(--danger); }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      z-index: 100;
+    }
+
+    .modal.show { display: flex; }
+
+    .modal-content {
+      background: var(--card-bg);
+      width: 98vw;
+      height: 92vh;
+      max-width: 1400px;
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-wrapper {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .recommendation-box {
+      background: rgba(139, 92, 246, 0.08);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .recommendation-box h4 {
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 768px) {
+      .days-grid { grid-template-columns: repeat(4, 1fr); }
+      .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+<div class="container">
+  <header>
+    <div class="header-left">
+      <div class="mel-global-logo">
+        MEL
+        <span>STUDIO</span>
+      </div>
+      <div class="header-title-area">
+        <div class="app-specific-badge">
+          ⚖️ Weight Tracker Pro
+        </div>
+        <h1>
+          Dashboard Atleta
+          <input type="text" id="userNameInput" class="name-input" placeholder="+ Nome Atleta" onchange="saveUserName(this.value)">
+        </h1>
+      </div>
+    </div>
+    <div class="btn-group-header">
+      <button class="btn-outline" onclick="toggleTheme()" id="themeBtn">🌙</button>
+      <button class="btn-outline" onclick="openChartModal()">📈 Grafico XL</button>
+      <button class="btn-outline" onclick="exportData()">📥 Esporta</button>
+      <button class="btn-outline" onclick="document.getElementById('importFile').click()">📤 Importa</button>
+      <button onclick="runSimulation()">⚡ Simula</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+    </div>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('trackerTab', this)">📊 Tracking Settimanale</button>
+    <button class="tab-btn" onclick="switchTab('dietTab', this)">🥗 Coaching Nutrizionale</button>
+    <button class="tab-btn" onclick="switchTab('profileTab', this)">⚙️ Profilo & Setup</button>
+  </div>
+
+  <!-- TAB 1: TRACKING SETTIMANALE -->
+  <div id="trackerTab" class="tab-content active">
+    <div class="card">
+      <div class="week-navigation">
+        <button class="btn-outline" onclick="changeWeek(-1)">← Sett. Prec.</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h3 id="currentWeekLabel">Settimana --</h3>
+          <input type="date" id="weekDatePicker" class="date-picker-input" onchange="onDateSelected(this.value)">
+        </div>
+        <button class="btn-outline" onclick="changeWeek(1)">Sett. Succ. →</button>
+      </div>
+
+      <div class="days-grid" id="daysGrid"></div>
+
+      <div class="inputs-container">
+        <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+          <div class="form-group" style="flex:2; min-width: 180px;">
+            <label id="selectedDayLabel">Peso del giorno (kg):</label>
+            <input type="number" step="0.1" id="weightInput" placeholder="Es. 74.5">
+          </div>
+          <button onclick="saveWeight()" style="height:38px;">Salva Peso</button>
+          <button class="btn-danger-outline" onclick="clearCurrentWeekWeights()" style="height:38px;">🗑️ Cancella Settimana</button>
+        </div>
+
+        <div class="grid-4">
+          <div class="form-group">
+            <label>Kcal Medie/die:</label>
+            <input type="number" id="kcalInput" placeholder="Auto / Manuale" onchange="saveWeeklyMetrics()">
+          </div>
+          <div class="form-group">
+            <label>Proteine (g/die):</label>
+            <input type="number" id="proteinInput" placeholder="Es. 150" onchange="updateMacroKcal()">
+          </div>
+          <div class="form-group">
+            <label>Carboidrati (g/die):</label>
+            <input type="number" id="carbsInput" placeholder="Es. 250" onchange="updateMacroKcal()">
+          </div>
+          <div class="form-group">
+            <label>Grassi (g/die):</label>
+            <input type="number" id="fatMacroInput" placeholder="Es. 60" onchange="updateMacroKcal()">
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label>% Massa Grassa:</label>
+            <input type="number" step="0.1" id="fatInput" placeholder="Es. 15.2" onchange="saveWeeklyMetrics()">
+          </div>
+          <div class="form-group">
+            <label>Obiettivo Peso (Target kg):</label>
+            <input type="number" step="0.1" id="targetInput" placeholder="Es. 70.0" onchange="saveTarget(this.value)">
+          </div>
+          <div class="form-group">
+            <label>Note Settimana:</label>
+            <input type="text" id="noteInput" placeholder="Es. Sgarro venerdì, alto stress" onchange="saveWeeklyMetrics()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Riepilogo e Medie Settimanali</h3>
+      <div class="stats-grid" style="margin-top:10px;">
+        <div class="stat-card">
+          <div class="stat-subtitle">Media Peso Corrente</div>
+          <div class="stat-value" id="currentAvg">-- kg</div>
+          <div class="stat-subtitle" id="entriesCount">0 pesate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-subtitle">Settimana Precedente</div>
+          <div class="stat-value" style="font-size:1.2rem;" id="prevAvg">-- kg</div>
+          <div id="deltaValue" class="delta">--</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-subtitle">Massa Grassa & Target</div>
+          <div class="stat-value" style="font-size:1.2rem; color:var(--fat-color);" id="fatDisplay">-- %</div>
+          <div class="stat-subtitle" id="targetDisplay">Target: -- kg</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-subtitle">Macro Medi Settimanali</div>
+          <div class="stat-value" style="font-size:1.1rem; color:var(--accent);" id="macroDisplay">P:-- C:-- F:--</div>
+          <div class="stat-subtitle" id="kcalDisplay">Kcal: --</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: COACHING NUTRIZIONALE -->
+  <div id="dietTab" class="tab-content">
+    <div class="card">
+      <h3>Protocollo Nutrizionale in Corso (Autocalibrazione MEL Engine)</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Il motore analizza sia il delta dell'ultima settimana chiusa sia il trend globale di tutte le settimane registrate.</p>
+
+      <div style="margin-top:14px;" class="grid-3">
+        <div class="form-group">
+          <label>Obiettivo Strategico:</label>
+          <select id="goalSelect" onchange="saveGoalSelection()">
+            <option value="light_cut">Definizione Graduale (Light Cut - Preserva Muscolo)</option>
+            <option value="aggressive_cut">Definizione Aggressiva (Aggressive Cut)</option>
+            <option value="maintenance">Mantenimento / Recomposizione</option>
+            <option value="lean_bulk">Aumento Massa Pulito (Lean Bulk)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="recommendation-box" id="recommendationOutput">
+        <h4>Caricamento protocollo...</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: PROFILO & SETUP -->
+  <div id="profileTab" class="tab-content">
+    <div class="card">
+      <h3>Dati Antropometrici dell'Atleta</h3>
+      <div style="margin-top:12px;" class="grid-4">
+        <div class="form-group">
+          <label>Sesso:</label>
+          <select id="genderInput" onchange="saveProfile()">
+            <option value="male">Uomo</option>
+            <option value="female">Donna</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Età (Anni):</label>
+          <input type="number" id="ageInput" placeholder="Es. 30" onchange="saveProfile()">
+        </div>
+        <div class="form-group">
+          <label>Altezza (cm):</label>
+          <input type="number" id="heightInput" placeholder="Es. 178" onchange="saveProfile()">
+        </div>
+        <div class="form-group">
+          <label>Livello Attività:</label>
+          <select id="activityInput" onchange="saveProfile()">
+            <option value="1.2">Sedentario (Lavoro d'ufficio)</option>
+            <option value="1.375">Leggero (1-3 allenamenti/sett)</option>
+            <option value="1.55">Moderato (3-5 allenamenti/sett)</option>
+            <option value="1.725">Attivo (6-7 allenamenti/sett)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Grafico Extra Large -->
+<div class="modal" id="chartModal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeChartModal()">&times;</button>
+    <h2 style="font-size:1.2rem; margin-bottom:8px;">Andamento Progressivo (Peso, Kcal, % Grasso)</h2>
+    <div class="chart-wrapper">
+      <canvas id="weeklyChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedMondayStr = getMondayDateStr(new Date());
+  let selectedDayIndex = 0;
+  const dayNames = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
+  let chartInstance = null;
+
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+    if(tabId === 'dietTab') calculateDietProposal();
+  }
+
+  function toggleTheme() {
+    const body = document.body;
+    const btn = document.getElementById('themeBtn');
+    if (body.getAttribute('data-theme') === 'light') {
+      body.setAttribute('data-theme', 'dark');
+      btn.innerText = '☀️';
+      localStorage.setItem('weight_tracker_theme', 'dark');
+    } else {
+      body.setAttribute('data-theme', 'light');
+      btn.innerText = '🌙';
+      localStorage.setItem('weight_tracker_theme', 'light');
+    }
+  }
+
+  if (localStorage.getItem('weight_tracker_theme') === 'dark') {
+    document.body.setAttribute('data-theme', 'dark');
+    document.getElementById('themeBtn').innerText = '☀️';
+  }
+
+  function getMondayDate(d) {
+    d = new Date(d);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+  }
+
+  function formatDateStr(date) {
+    const d = new Date(date);
+    let m = '' + (d.getMonth() + 1), day = '' + d.getDate(), y = d.getFullYear();
+    if (m.length < 2) m = '0' + m;
+    if (day.length < 2) day = '0' + day;
+    return [y, m, day].join('-');
+  }
+
+  function formatToItalian(s) {
+    if (!s) return '';
+    const p = s.split('-');
+    return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : s;
+  }
+
+  function getMondayDateStr(d) { return formatDateStr(getMondayDate(d)); }
+  function getPrevWeekKey(mStr) {
+    const d = new Date(mStr);
+    d.setDate(d.getDate() - 7);
+    return formatDateStr(d);
+  }
+
+  function getData() { return JSON.parse(localStorage.getItem('weight_tracker_data') || '{}'); }
+  function saveData(d) { localStorage.setItem('weight_tracker_data', JSON.stringify(d)); }
+  function getTarget() { return parseFloat(localStorage.getItem('weight_tracker_target')) || null; }
+  function saveTarget(v) {
+    const t = parseFloat(v);
+    if (isNaN(t)) localStorage.removeItem('weight_tracker_target');
+    else localStorage.setItem('weight_tracker_target', t);
+    updateUI();
+  }
+
+  function getUserName() { return localStorage.getItem('weight_tracker_username') || ''; }
+  function saveUserName(v) {
+    if (v.trim() === '') localStorage.removeItem('weight_tracker_username');
+    else localStorage.setItem('weight_tracker_username', v.trim());
+  }
+
+  function saveProfile() {
+    const profile = {
+      gender: document.getElementById('genderInput').value,
+      age: parseInt(document.getElementById('ageInput').value) || 30,
+      height: parseInt(document.getElementById('heightInput').value) || 175,
+      activity: parseFloat(document.getElementById('activityInput').value) || 1.375
+    };
+    localStorage.setItem('weight_tracker_profile', JSON.stringify(profile));
+    calculateDietProposal();
+  }
+
+  function getProfile() {
+    return JSON.parse(localStorage.getItem('weight_tracker_profile') || '{"gender":"male","age":30,"height":175,"activity":1.375}');
+  }
+
+  function saveGoalSelection() {
+    const goal = document.getElementById('goalSelect').value;
+    const data = getData();
+    if (!data[selectedMondayStr]) data[selectedMondayStr] = { weights: {}, kcal: null, fat: null, note: '', protein: null, carbs: null, fatMacro: null };
+    data[selectedMondayStr].goal = goal;
+    saveData(data);
+    calculateDietProposal();
+  }
+
+  function updateMacroKcal() {
+    const p = parseInt(document.getElementById('proteinInput').value) || 0;
+    const c = parseInt(document.getElementById('carbsInput').value) || 0;
+    const f = parseInt(document.getElementById('fatMacroInput').value) || 0;
+    if (p || c || f) {
+      const totalKcal = (p * 4) + (c * 4) + (f * 9);
+      document.getElementById('kcalInput').value = totalKcal;
+    }
+    saveWeeklyMetrics();
+  }
+
+  function saveWeeklyMetrics() {
+    const kcal = parseInt(document.getElementById('kcalInput').value);
+    const fat = parseFloat(document.getElementById('fatInput').value);
+    const note = document.getElementById('noteInput').value;
+    const p = parseInt(document.getElementById('proteinInput').value);
+    const c = parseInt(document.getElementById('carbsInput').value);
+    const f = parseInt(document.getElementById('fatMacroInput').value);
+
+    const data = getData();
+    if (!data[selectedMondayStr]) data[selectedMondayStr] = { weights: {}, kcal: null, fat: null, note: '', protein: null, carbs: null, fatMacro: null };
+    data[selectedMondayStr].kcal = isNaN(kcal) ? null : kcal;
+    data[selectedMondayStr].fat = isNaN(fat) ? null : fat;
+    data[selectedMondayStr].note = note;
+    data[selectedMondayStr].protein = isNaN(p) ? null : p;
+    data[selectedMondayStr].carbs = isNaN(c) ? null : c;
+    data[selectedMondayStr].fatMacro = isNaN(f) ? null : f;
+
+    saveData(data);
+    updateUI();
+  }
+
+  function clearCurrentWeekWeights() {
+    const data = getData();
+    if (data[selectedMondayStr] && data[selectedMondayStr].weights) {
+      if (confirm(`Sei sicuro di voler cancellare tutti i pesi inseriti per la settimana del ${formatToItalian(selectedMondayStr)}?`)) {
+        data[selectedMondayStr].weights = {};
+        saveData(data);
+        updateUI();
+      }
+    } else {
+      alert("Nessun peso registrato in questa settimana.");
+    }
+  }
+
+  function exportData() {
+    const data = getData(), target = getTarget(), userName = getUserName(), profile = getProfile();
+    const blob = new Blob([JSON.stringify({ data, target, userName, profile }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_weight_tracker_mel.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        const p = JSON.parse(evt.target.result);
+        if (p.data) saveData(p.data);
+        if (p.target) localStorage.setItem('weight_tracker_target', p.target);
+        if (p.userName) localStorage.setItem('weight_tracker_username', p.userName);
+        if (p.profile) localStorage.setItem('weight_tracker_profile', JSON.stringify(p.profile));
+        updateUI();
+        alert('Importazione riuscita con successo!');
+      } catch (err) { alert('File di backup non valido.'); }
+    };
+    reader.readAsText(file);
+  }
+
+  function changeWeek(dir) {
+    const d = new Date(selectedMondayStr);
+    d.setDate(d.getDate() + (dir * 7));
+    selectedMondayStr = formatDateStr(d);
+    updateUI();
+  }
+
+  function onDateSelected(val) {
+    if (!val) return;
+    selectedMondayStr = getMondayDateStr(new Date(val));
+    updateUI();
+  }
+
+  function renderDaysGrid() {
+    const grid = document.getElementById('daysGrid');
+    grid.innerHTML = '';
+    const data = getData();
+    const wData = data[selectedMondayStr] || { weights: {} };
+    const mDate = new Date(selectedMondayStr);
+
+    dayNames.forEach((name, idx) => {
+      const cDate = new Date(mDate);
+      cDate.setDate(mDate.getDate() + idx);
+      const dNum = cDate.getDate();
+      const btn = document.createElement('div');
+      const hasW = wData.weights && wData.weights[idx] !== undefined;
+      btn.className = `day-btn ${idx === selectedDayIndex ? 'active' : ''} ${hasW ? 'has-data' : ''}`;
+      btn.innerHTML = `<span>${name.substring(0, 3)} ${dNum}</span><small>${hasW ? wData.weights[idx] + 'kg' : '-'}</small>`;
+      btn.onclick = () => { selectedDayIndex = idx; updateUI(); };
+      grid.appendChild(btn);
+    });
+  }
+
+  function saveWeight() {
+    const val = parseFloat(document.getElementById('weightInput').value);
+    if (isNaN(val)) return;
+    const data = getData();
+    if (!data[selectedMondayStr]) data[selectedMondayStr] = { weights: {}, kcal: null, fat: null, note: '' };
+    data[selectedMondayStr].weights[selectedDayIndex] = val;
+    saveData(data);
+    document.getElementById('weightInput').value = '';
+    updateUI();
+  }
+
+  function calcAvg(wData, maxIdx) {
+    if (!wData || !wData.weights) return { avg: null, count: 0 };
+    let sum = 0, count = 0;
+    for (let i = 0; i <= maxIdx; i++) {
+      if (wData.weights[i] !== undefined) { sum += wData.weights[i]; count++; }
+    }
+    return { avg: count > 0 ? sum / count : null, count };
+  }
+
+  function updateUI() {
+    const data = getData(), prevKey = getPrevWeekKey(selectedMondayStr), target = getTarget(), uName = getUserName(), prof = getProfile();
+    const wData = data[selectedMondayStr] || { weights: {}, kcal: null, fat: null, note: '', protein: null, carbs: null, fatMacro: null, goal: 'light_cut' };
+    const pData = data[prevKey] || { weights: {}, kcal: null, fat: null, note: '' };
+
+    document.getElementById('currentWeekLabel').innerText = `Settimana del ${formatToItalian(selectedMondayStr)}`;
+    document.getElementById('weekDatePicker').value = selectedMondayStr;
+    document.getElementById('selectedDayLabel').innerText = `Peso per ${dayNames[selectedDayIndex]} (kg):`;
+    document.getElementById('kcalInput').value = wData.kcal ?? '';
+    document.getElementById('fatInput').value = wData.fat ?? '';
+    document.getElementById('noteInput').value = wData.note ?? '';
+    document.getElementById('proteinInput').value = wData.protein ?? '';
+    document.getElementById('carbsInput').value = wData.carbs ?? '';
+    document.getElementById('fatMacroInput').value = wData.fatMacro ?? '';
+    document.getElementById('targetInput').value = target ?? '';
+    document.getElementById('userNameInput').value = uName;
+    document.getElementById('goalSelect').value = wData.goal || 'light_cut';
+    document.getElementById('fatDisplay').innerText = wData.fat != null ? `${wData.fat}%` : '-- %';
+
+    document.getElementById('genderInput').value = prof.gender;
+    document.getElementById('ageInput').value = prof.age;
+    document.getElementById('heightInput').value = prof.height;
+    document.getElementById('activityInput').value = prof.activity;
+
+    if(wData.protein || wData.carbs || wData.fatMacro) {
+      document.getElementById('macroDisplay').innerText = `P:${wData.protein||0} C:${wData.carbs||0} F:${wData.fatMacro||0}`;
+    } else {
+      document.getElementById('macroDisplay').innerText = `P:-- C:-- F:--`;
+    }
+    document.getElementById('kcalDisplay').innerText = wData.kcal ? `Kcal: ${wData.kcal}` : 'Kcal: --';
+
+    renderDaysGrid();
+
+    const curRes = calcAvg(wData, selectedDayIndex);
+    const curAvgEl = document.getElementById('currentAvg');
+    if (curRes.avg !== null) {
+      curAvgEl.innerText = `${curRes.avg.toFixed(2)} kg`;
+      document.getElementById('entriesCount').innerText = `${curRes.count} pesate`;
+      if (target !== null) {
+        if (target > curRes.avg) {
+          const diff = target - curRes.avg;
+          document.getElementById('targetDisplay').innerText = curRes.avg >= target ? `Target raggiunto! 🎉` : `Target: ${target} kg (+${diff.toFixed(2)}kg)`;
+        } else {
+          const diff = curRes.avg - target;
+          document.getElementById('targetDisplay').innerText = curRes.avg <= target ? `Target raggiunto! 🎉` : `Target: ${target} kg (-${diff.toFixed(2)}kg)`;
+        }
+      } else {
+        document.getElementById('targetDisplay').innerText = `Target non impostato`;
+      }
+    } else {
+      curAvgEl.innerText = `-- kg`;
+      document.getElementById('entriesCount').innerText = `0 pesate`;
+      document.getElementById('targetDisplay').innerText = target !== null ? `Target: ${target} kg` : `Target non impostato`;
+    }
+
+    const prevRes = calcAvg(pData, 6);
+    const prevAvgEl = document.getElementById('prevAvg'), deltaEl = document.getElementById('deltaValue');
+    if (prevRes.avg !== null) {
+      prevAvgEl.innerText = `${prevRes.avg.toFixed(2)} kg`;
+      if (curRes.avg !== null) {
+        const diff = curRes.avg - prevRes.avg;
+        deltaEl.innerText = `Diff: ${diff > 0 ? '+' : ''}${diff.toFixed(2)} kg`;
+        deltaEl.className = `delta ${diff <= 0 ? 'minus' : 'plus'}`;
+      } else { deltaEl.innerText = '--'; }
+    } else { prevAvgEl.innerText = `-- kg`; deltaEl.innerText = 'Nessun dato'; }
+
+    calculateDietProposal();
+  }
+
+  function calculateDietProposal() {
+    const data = getData(), prevKey = getPrevWeekKey(selectedMondayStr);
+    const currWeekData = data[selectedMondayStr], prevWeekData = data[prevKey], prof = getProfile();
+    
+    const output = document.getElementById('recommendationOutput');
+
+    if (!prevWeekData || !calcAvg(prevWeekData, 6).avg) {
+      output.innerHTML = `<h4>In attesa di dati storici chiusi</h4><p style="font-size:0.85rem;">Il coaching analizza la settimana precedente (${formatToItalian(prevKey)}) per calcolare i nuovi macro bloccati.</p>`;
+      return;
+    }
+
+    const closedPrevRes = calcAvg(prevWeekData, 6);
+    const twoWeeksKey = getPrevWeekKey(prevKey);
+    const closedTwoWeeksData = data[twoWeeksKey];
+    const closedTwoWeeksRes = calcAvg(closedTwoWeeksData, 6);
+
+    let allKeys = Object.keys(data).sort();
+    let validAvgs = [];
+    allKeys.forEach(k => {
+      let r = calcAvg(data[k], 6);
+      if(r.avg !== null && k <= prevKey) validAvgs.push(r.avg);
+    });
+
+    let closedDeltaWeight = closedTwoWeeksRes.avg !== null ? (closedPrevRes.avg - closedTwoWeeksRes.avg) : 0;
+    let globalTrendWeight = validAvgs.length >= 2 ? (validAvgs[validAvgs.length - 1] - validAvgs[0]) : 0;
+
+    let isStalled = false;
+    if(validAvgs.length >= 3) {
+      let last3 = validAvgs.slice(-3);
+      if(Math.abs(last3[0] - last3[2]) < 0.2) isStalled = true;
+    }
+
+    const weight = closedPrevRes.avg;
+    const goal = currWeekData && currWeekData.goal ? currWeekData.goal : 'light_cut';
+
+    let bmr = (10 * weight) + (6.25 * prof.height) - (5 * prof.age) + (prof.gender === 'male' ? 5 : -161);
+    let tdee = Math.round(bmr * prof.activity);
+
+    let baselineKcal = prevWeekData && prevWeekData.kcal ? prevWeekData.kcal : tdee;
+    
+    let curFat = prevWeekData && prevWeekData.fat != null ? prevWeekData.fat : null;
+    let prevFat = (closedTwoWeeksData && closedTwoWeeksData.fat != null) ? closedTwoWeeksData.fat : null;
+    let deltaFat = (curFat !== null && prevFat !== null) ? (curFat - prevFat) : 0;
+
+    let targetKcal = baselineKcal;
+    let pGrams = 0, fGrams = 0, cGrams = 0;
+    let strategyText = "";
+
+    switch (goal) {
+      case 'light_cut':
+        pGrams = Math.round(weight * 2.2);
+        fGrams = Math.round(weight * 0.8);
+        targetKcal = baselineKcal - 300;
+
+        if (isStalled) {
+          targetKcal = baselineKcal - 450;
+          strategyText = "MEL Engine (Autocalibrazione): Rilevato stallo multi-settimanale nello storico. Deficit aumentato a -450 kcal per riattivare il trend.";
+        } else if (closedDeltaWeight < -0.1 && deltaFat >= 0) {
+          pGrams = Math.round(weight * 2.4);
+          targetKcal = baselineKcal - 350;
+          strategyText = "MEL Engine (Autocalibrazione): Ultima settimana con calo peso ma grasso stabile. Proteine alzate a 2.4g/kg e taglio calorico ottimizzato.";
+        } else if (closedDeltaWeight < -0.1 && deltaFat < 0) {
+          strategyText = "MEL Engine (Autocalibrazione): Ottima risposta organica confermata sia dal delta recente che dal trend globale. Protocollo confermato.";
+        } else {
+          strategyText = "Deficit moderato (-300 kcal) calibrato sulla base dei riscontri chiusi.";
+        }
+        break;
+
+      case 'aggressive_cut':
+        pGrams = Math.round(weight * 2.4);
+        fGrams = Math.round(weight * 0.6);
+        targetKcal = baselineKcal - 550;
+        if (isStalled) {
+          targetKcal = baselineKcal - 650;
+          strategyText = "MEL Engine (Autocalibrazione): Stallo prolungato nello storico. Stimolo lipolitico incrementato.";
+        } else {
+          strategyText = "Deficit marcato (-550 kcal) validato dall'autocalibrazione storica.";
+        }
+        break;
+
+      case 'maintenance':
+        pGrams = Math.round(weight * 2.0);
+        fGrams = Math.round(weight * 0.9);
+        let adjKcal = 0;
+        if (closedDeltaWeight > 0.2) adjKcal = -200;
+        else if (closedDeltaWeight < -0.2) adjKcal = +200;
+        targetKcal = baselineKcal + adjKcal;
+        strategyText = "Recomposizione MEL Engine (Autocalibrazione): bilanciamento energetico dinamico.";
+        break;
+
+      case 'lean_bulk':
+        pGrams = Math.round(weight * 2.0);
+        fGrams = Math.round(weight * 1.0);
+        targetKcal = baselineKcal + 250;
+
+        if (deltaFat > 0.25) {
+          targetKcal = baselineKcal;
+          pGrams = Math.round(weight * 2.2);
+          strategyText = "MEL Engine (Autocalibrazione): Accumulo adiposo recente superiore alla soglia. Surplus azzerato temporaneamente.";
+        } else if (isStalled) {
+          targetKcal = baselineKcal + 350;
+          strategyText = "MEL Engine (Autocalibrazione): Crescita ponderale ferma nelle ultime settimane. Surplus aumentato a +350 kcal.";
+        } else {
+          strategyText = "Surplus calorico controllato (+250 kcal) validato dall'autocalibrazione.";
+        }
+        break;
+    }
+
+    let remainingKcal = targetKcal - (pGrams * 4) - (fGrams * 9);
+    cGrams = Math.max(50, Math.round(remainingKcal / 4));
+
+    output.innerHTML = `
+      <h4>Protocollo Bloccato (Autocalibrazione MEL Engine):</h4>
+      <p style="font-size:0.85rem; margin-bottom:4px;"><strong>Δ Ultima Settimana Chiusa:</strong> <span style="color:var(--primary); font-weight:bold;">${closedDeltaWeight > 0 ? '+' : ''}${closedDeltaWeight.toFixed(2)} kg</span> | <strong>Δ Globale Storico (${validAvgs.length} sett.):</strong> <span style="color:var(--accent); font-weight:bold;">${globalTrendWeight > 0 ? '+' : ''}${globalTrendWeight.toFixed(2)} kg</span></p>
+      <p style="font-size:0.85rem; margin-bottom:12px;"><strong>MEL Coaching Engine:</strong> ${strategyText}</p>
+      <div class="grid-4" style="margin-top:8px;">
+        <div class="stat-card">
+          <div class="stat-subtitle">Calorie Target Fisse</div>
+          <div class="stat-value" style="font-size:1.3rem; color:var(--primary);">${targetKcal} Kcal</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-subtitle">Proteine Fisse</div>
+          <div class="stat-value" style="font-size:1.3rem;">${pGrams} g</div>
+          <div class="stat-subtitle">${(pGrams/weight).toFixed(1)} g/kg</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-subtitle">Carboidrati Fissi</div>
+          <div class="stat-value" style="font-size:1.3rem;">${cGrams} g</div>
+          <div class="stat-subtitle">${(cGrams/weight).toFixed(1)} g/kg</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-subtitle">Grassi Fissi</div>
+          <div class="stat-value" style="font-size:1.3rem;">${fGrams} g</div>
+          <div class="stat-subtitle">${(fGrams/weight).toFixed(1)} g/kg</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function runSimulation() {
+    const data = getData(), w1 = getPrevWeekKey(selectedMondayStr), w2 = selectedMondayStr;
+    data[w1] = { weights: { 0: 75.5, 1: 75.3, 2: 75.0, 3: 74.8, 4: 74.9, 5: 74.7, 6: 74.5 }, kcal: 2400, fat: 16.5, protein: 160, carbs: 280, fatMacro: 65, goal: 'light_cut', note: 'Settimana chiusa' };
+    data[w2] = { weights: { 0: 74.4, 1: 74.2 }, kcal: 2250, fat: 15.8, protein: 165, carbs: 240, fatMacro: 60, goal: 'light_cut', note: 'Settimana in corso' };
+    localStorage.setItem('weight_tracker_target', '70.0');
+    localStorage.setItem('weight_tracker_username', 'Atleta MEL');
+    saveData(data);
+    updateUI();
+  }
+
+  function openChartModal() { document.getElementById('chartModal').classList.add('show'); renderChart(); }
+  function closeChartModal() { document.getElementById('chartModal').classList.remove('show'); }
+
+  function renderChart() {
+    const data = getData(), keys = Object.keys(data).sort(), target = getTarget();
+    const labels = [], wAvgs = [], kVals = [], fVals = [], tVals = [];
+    keys.forEach(k => {
+      const res = calcAvg(data[k], 6);
+      if (res.avg !== null || data[k].kcal || data[k].fat) {
+        labels.push(formatToItalian(k));
+        wAvgs.push(res.avg ? res.avg.toFixed(2) : null);
+        kVals.push(data[k].kcal || null);
+        fVals.push(data[k].fat || null);
+        tVals.push(target);
+      }
+    });
+
+    const ctx = document.getElementById('weeklyChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    const datasets = [
+      { label: 'Media Peso (kg)', data: wAvgs, borderColor: '#2563eb', backgroundColor: '#2563eb', yAxisID: 'yWeight', spanGaps: true, borderWidth:3 },
+      { label: 'Kcal Medie', data: kVals, borderColor: '#10b981', backgroundColor: '#10b981', yAxisID: 'yKcal', spanGaps: true, borderWidth:2 },
+      { label: '% Massa Grassa', data: fVals, borderColor: '#f59e0b', backgroundColor: '#f59e0b', yAxisID: 'yFat', spanGaps: true, borderWidth:2 }
+    ];
+    if (target !== null) {
+      datasets.push({ label: 'Target Peso', data: tVals, borderColor: '#ef4444', borderDash: [5,5], pointRadius: 0, yAxisID: 'yWeight', spanGaps: true, borderWidth:2 });
+    }
+
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          yWeight: { type: 'linear', position: 'left', title: { display: true, text: 'Peso (kg)' } },
+          yKcal: { type: 'linear', position: 'right', title: { display: true, text: 'Kcal' }, grid: { drawOnChartArea: false } },
+          yFat: { type: 'linear', position: 'right', title: { display: true, text: '% Grasso' }, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  }
+
+  updateUI();
+</script>
+</body>
+</html>
